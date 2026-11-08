@@ -64,7 +64,13 @@ header.nav{background:rgba(251,249,243,.95);border-bottom:1px solid var(--line);
 .f.bad .err{display:block}
 .hint{font-size:.8rem;color:var(--muted);margin-top:4px}
 
-.plans{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px}
+.plans{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:8px}
+.pgroup{font-size:.76rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--green-700);margin:6px 0 10px;display:flex;align-items:center;gap:10px}
+.pgroup::after{content:"";flex:1;height:1px;background:var(--line)}
+.plan.renew .amt{color:var(--gold-600)}
+.renewbox{display:none;margin:4px 0 18px;padding:16px;border-radius:16px;background:var(--gold-100)}
+.renewbox.on{display:grid}
+.renewbox select{width:100%;font:inherit;font-size:.98rem;padding:12px 14px;border-radius:12px;border:1.5px solid var(--line);background:#fff}
 .plan{position:relative;display:block;border:2px solid var(--line);border-radius:18px;padding:20px;cursor:pointer;transition:border-color .15s,box-shadow .15s;background:#fff}
 .plan input{position:absolute;opacity:0}
 .plan:hover{border-color:var(--green-100)}
@@ -182,13 +188,13 @@ footer a{color:var(--green-700);font-weight:700}
 
 <section class="hero">
   <div class="wrap">
-    <span class="eyebrow">Pendaftaran Ahli Baharu</span>
+    <span class="eyebrow">Pendaftaran &amp; Pembaharuan Keahlian</span>
     <h1>Sertai Persatuan Pakar Perubatan Kesihatan Awam Negeri Kedah</h1>
-    <p>Lengkapkan pendaftaran dalam tiga langkah ringkas. Borang Keahlian anda akan dijana secara automatik, disimpan dalam rekod persatuan, dan boleh dimuat turun untuk simpanan anda.</p>
+    <p>Daftar sebagai ahli baharu atau perbaharui yuran keahlian anda dalam tiga langkah ringkas. Borang Keahlian anda akan dijana secara automatik, disimpan dalam rekod persatuan, dan boleh dimuat turun untuk simpanan anda.</p>
     <div class="facts">
       <span class="fact">Ahli Tahunan <b id="fT">RM60</b> tahun pertama</span>
       <span class="fact">Seumur Hidup <b id="fS">RM310</b></span>
-      <span class="fact">Sediakan <b>resit bayaran</b></span>
+      <span class="fact">Pembaharuan <b id="fR">RM50</b> / tahun</span>
     </div>
   </div>
 </section>
@@ -226,8 +232,16 @@ footer a{color:var(--green-700);font-weight:700}
       <!-- LANGKAH 2 -->
       <div class="pane" data-p="2">
         <h2>Jenis Keahlian &amp; Bayaran</h2>
-        <p class="sub">Pilih jenis keahlian, buat bayaran ke akaun persatuan, kemudian muat naik resit.</p>
-        <div class="plans" id="plans"></div>
+        <p class="sub">Pilih jenis permohonan, buat bayaran ke akaun persatuan, kemudian muat naik resit.</p>
+        <div class="pgroup">Ahli Baharu</div>
+        <div class="plans" id="plansNew"></div>
+        <div class="pgroup" style="margin-top:18px">Ahli Sedia Ada</div>
+        <div class="plans" id="plansRenew"></div>
+        <div class="renewbox grid" id="renewbox">
+          <div class="f" id="fTahun"><label for="tahunYuran">Tahun yuran yang dibayar <em>*</em></label><select id="tahunYuran"></select></div>
+          <div class="f"><label for="noAhli">No. Ahli <small>(jika diketahui, cth: 23-07)</small></label><input id="noAhli" name="noAhli" placeholder="cth: 23-07"></div>
+        </div>
+        <div style="height:16px" id="plans"></div>
 
         <div class="bank">
           <div class="lbl">Bayar ke akaun persatuan</div>
@@ -280,7 +294,7 @@ footer a{color:var(--green-700);font-weight:700}
     <!-- BERJAYA -->
     <div class="done" id="done" hidden>
       <div class="ok"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div>
-      <h2>Pendaftaran diterima!</h2>
+      <h2 id="doneH">Pendaftaran diterima!</h2>
       <div class="refbox"><small>NO. RUJUKAN</small><b id="refNo"></b></div>
       <p id="doneMsg">Borang Keahlian anda telah dijana dan disimpan dalam rekod persatuan.</p>
       <div class="btns">
@@ -288,7 +302,7 @@ footer a{color:var(--green-700);font-weight:700}
         <button class="btn btn-ghost" id="viewPdf">Lihat / Cetak</button>
         <a class="btn btn-wa" id="waBtn" target="_blank" rel="noopener">Maklumkan Bendahari (WhatsApp)</a>
       </div>
-      <div class="next"><b>Langkah seterusnya</b><ol>
+      <div class="next"><b>Langkah seterusnya</b><ol id="nextSteps">
         <li>Bendahari akan mengesahkan bayaran anda.</li>
         <li>Permohonan akan dibentangkan untuk kelulusan persatuan.</li>
         <li>Setelah diluluskan, anda boleh menyemak status dan memuat turun e-Kad Keahlian di laman utama persatuan.</li>
@@ -310,8 +324,10 @@ const CONFIG = {
   API_URL: "https://script.google.com/macros/s/AKfycbzFLxLtxB4NPNncqNmOOx8N8UD1HSmKuCRKxQqFA0OPl-s9yC2eCsKtuyAs7FhHYBc/exec",                                     // URL Web App Apps Script (Code.gs)
   MAIN_SITE: "https://pppkank.github.io/page/",
   FEES: {
-    TAHUNAN: { label:"Ahli Tahunan",      masuk:10, yuran:50,  desc:"Yuran tahunan" },
-    SEUMUR:  { label:"Ahli Seumur Hidup", masuk:10, yuran:300, desc:"Yuran seumur hidup" }
+    TAHUNAN:       { group:"new",   label:"Ahli Tahunan",               masuk:10, yuran:50,  desc:"Yuran tahunan" },
+    SEUMUR:        { group:"new",   label:"Ahli Seumur Hidup",          masuk:10, yuran:300, desc:"Yuran seumur hidup" },
+    RENEW_TAHUNAN: { group:"renew", label:"Pembaharuan Yuran Tahunan",  masuk:0,  yuran:50,  desc:"Yuran tahunan" },
+    RENEW_SEUMUR:  { group:"renew", label:"Tukar ke Ahli Seumur Hidup", masuk:0,  yuran:300, desc:"Yuran seumur hidup" }
   },
   BANK: { name:"Persatuan Pakar Perubatan Kesihatan Awam", no:"8605649390", bank:"CIMB Bank", branch:"Persiaran Sultan Abdul Hamid, Alor Setar" },
   BENDAHARI_WA: "60125776093",                     // Dr Tan Wei Leong
@@ -323,18 +339,30 @@ const YEAR = new Date().getFullYear();
 $("yr").textContent = YEAR;
 $("mainLink").href = CONFIG.MAIN_SITE;
 const tot = k => CONFIG.FEES[k].masuk + CONFIG.FEES[k].yuran;
-$("fT").textContent = "RM"+tot("TAHUNAN"); $("fS").textContent = "RM"+tot("SEUMUR");
+$("fT").textContent = "RM"+tot("TAHUNAN"); $("fS").textContent = "RM"+tot("SEUMUR"); $("fR").textContent = "RM"+tot("RENEW_TAHUNAN");
 
 /* ---------- Pelan keahlian ---------- */
-$("plans").innerHTML = Object.entries(CONFIG.FEES).map(([k,f])=>`
-  <label class="plan" data-k="${k}"><input type="radio" name="jenis" value="${k}"><span class="tick"></span>
+const TAGS = {
+  TAHUNAN: f=>`Termasuk bayaran masuk · sah hingga 31 Disember ${YEAR}`,
+  SEUMUR: f=>"Termasuk bayaran masuk · sekali bayar",
+  RENEW_TAHUNAN: f=>"Untuk ahli tahunan sedia ada",
+  RENEW_SEUMUR: f=>"Ahli sedia ada yang ingin bertukar ke seumur hidup"
+};
+const planHTML = ([k,f])=>`
+  <label class="plan${f.group==="renew"?" renew":""}" data-k="${k}"><input type="radio" name="jenis" value="${k}"><span class="tick"></span>
     <h3>${f.label}</h3><div class="amt">RM${tot(k)}</div>
-    <div class="brk">Bayaran masuk RM${f.masuk} + ${f.desc} RM${f.yuran}</div>
-    <span class="tag">${k==="TAHUNAN" ? `Sah hingga 31 Disember ${YEAR} · RM${f.yuran}/tahun selepas itu` : "Sekali bayar · tiada pembaharuan"}</span>
-  </label>`).join("");
+    <div class="brk">${f.masuk?`Bayaran masuk RM${f.masuk} + `:""}${f.desc} RM${f.yuran}</div>
+    <span class="tag">${TAGS[k]?TAGS[k](f):""}</span>
+  </label>`;
+$("plansNew").innerHTML = Object.entries(CONFIG.FEES).filter(([k,f])=>f.group==="new").map(planHTML).join("");
+$("plansRenew").innerHTML = Object.entries(CONFIG.FEES).filter(([k,f])=>f.group==="renew").map(planHTML).join("");
+$("tahunYuran").innerHTML = [YEAR-1, YEAR, YEAR+1].map(y=>`<option value="${y}">${y}</option>`).join("");
+$("tahunYuran").value = new Date().getMonth()>=9 ? YEAR+1 : YEAR;   // Okt–Dis: cadang tahun hadapan
 function setPlan(k){
   document.querySelectorAll(".plan").forEach(p=>{ const on=p.dataset.k===k; p.classList.toggle("sel",on); p.querySelector("input").checked=on; });
   $("payAmt").textContent = "RM"+tot(k);
+  $("renewbox").classList.toggle("on", CONFIG.FEES[k].group==="renew");
+  $("fTahun").style.display = k==="RENEW_TAHUNAN" ? "" : "none";
   save();
 }
 document.querySelectorAll(".plan input").forEach(i=>i.addEventListener("change",()=>setPlan(i.value)));
@@ -353,7 +381,7 @@ $("tarikhBayar").max = new Date().toISOString().slice(0,10);
 
 /* ---------- Simpan draf (bukan resit/tandatangan) ---------- */
 const DRAFT="pppkank_daftar_v1";
-const FIELDS=["nama","nokp","telefon","emel","alamat","mmc","nsr","subbidang","jawatan","tempat","tarikhBayar","rujukanBayar"];
+const FIELDS=["nama","nokp","telefon","emel","alamat","mmc","nsr","subbidang","jawatan","tempat","tarikhBayar","rujukanBayar","noAhli"];
 function save(){ try{ const o={}; FIELDS.forEach(f=>o[f]=$(f).value); const j=document.querySelector(".plan input:checked"); o.jenis=j?j.value:""; localStorage.setItem(DRAFT,JSON.stringify(o)); }catch(e){} }
 function load(){ try{ const o=JSON.parse(localStorage.getItem(DRAFT)||"{}"); FIELDS.forEach(f=>{ if(o[f]) $(f).value=o[f]; }); if(o.jenis) setPlan(o.jenis); }catch(e){} }
 FIELDS.forEach(f=>$(f).addEventListener("input",()=>{ save(); $(f).closest(".f").classList.remove("bad"); }));
@@ -434,7 +462,7 @@ function renderReview(){
   const sec=(t,step,rows)=>`<div class="review"><h4>${t}<button type="button" onclick="go(${step})">Ubah</button></h4><dl>${rows.map(([a,b])=>`<dt>${a}</dt><dd>${esc(b||"-")}</dd>`).join("")}</dl></div>`;
   $("review").innerHTML =
     sec("Maklumat Diri",1,[["Nama",v("nama").toUpperCase()],["No. KP",v("nokp")],["Telefon",v("telefon")],["Emel",v("emel")],["Alamat",v("alamat")],["No. MMC",v("mmc")],["No. NSR",v("nsr")],["Sub-bidang",v("subbidang")],["Jawatan / Gred",v("jawatan")],["Tempat bertugas",v("tempat")]]) +
-    sec("Keahlian & Bayaran",2,[["Jenis keahlian",f.label],["Jumlah",`RM${tot(k)} (masuk RM${f.masuk} + yuran RM${f.yuran})`],["Tarikh bayaran",tb],["No. rujukan",v("rujukanBayar")],["Resit",$("fname").textContent]]);
+    sec("Keahlian & Bayaran",2,[["Jenis permohonan",f.label + (k==="RENEW_TAHUNAN" ? " "+$("tahunYuran").value : "")], ...(f.group==="renew"?[["No. Ahli",v("noAhli")]]:[]), ["Jumlah",`RM${tot(k)}`+(f.masuk?` (masuk RM${f.masuk} + yuran RM${f.yuran})`:"")],["Tarikh bayaran",tb],["No. rujukan",v("rujukanBayar")],["Resit",$("fname").textContent]]);
   $("sigName").textContent = v("nama").toUpperCase();
 }
 
@@ -480,6 +508,7 @@ $("form").addEventListener("submit", async e=>{
     nama:v("nama").toUpperCase(), nokp:v("nokp").replace(/\D/g,""), telefon:v("telefon"), emel:v("emel"), alamat:v("alamat"),
     mmc:v("mmc"), nsr:v("nsr"), subbidang:v("subbidang"), jawatan:v("jawatan"), tempat:v("tempat"),
     jenis:document.querySelector(".plan input:checked").value, tarikhBayar:v("tarikhBayar"), rujukanBayar:v("rujukanBayar"),
+    tahunYuranPilih:$("tahunYuran").value, noAhli:v("noAhli"),
     resit:{ name:RESIT.name, type:RESIT.type, data:RESIT.data.split(",")[1] },
     signature:sigPNG(), persetujuan:true, salinanEmel:$("salinanEmel").checked
   };
@@ -505,6 +534,8 @@ function b64ToBlob(b64,type){ const bin=atob(b64), u=new Uint8Array(bin.length);
 function showDone(j,p){
   $("form").hidden=true; $("steps").hidden=true; $("done").hidden=false;
   $("refNo").textContent=j.ref;
+  const isRenew = CONFIG.FEES[p.jenis].group==="renew";
+  if(isRenew){ $("doneH").textContent="Permohonan pembaharuan diterima!"; $("nextSteps").innerHTML="<li>Bendahari akan mengesahkan bayaran anda.</li><li>Rekod yuran anda akan dikemas kini dalam senarai ahli.</li><li>Selepas itu, semak status dan muat turun e-Kad Keahlian di laman utama persatuan.</li>"; }
   $("doneMsg").textContent = "Borang Keahlian anda telah dijana dan disimpan dalam rekod persatuan." + (j.emailed ? ` Salinan juga dihantar ke ${p.emel}.` : "") + " Muat turun salinan untuk simpanan anda.";
   if(j.pdf){
     PDF={ url:URL.createObjectURL(b64ToBlob(j.pdf,"application/pdf")), name:j.pdfName||`Borang_Keahlian_${j.ref}.pdf` };
@@ -512,7 +543,7 @@ function showDone(j,p){
     $("viewPdf").onclick=()=>window.open(PDF.url,"_blank");
   } else { $("dlPdf").hidden=true; $("viewPdf").hidden=true; }
   const f=CONFIG.FEES[p.jenis];
-  const msg=`Assalamualaikum Dr. Saya telah mendaftar sebagai ahli PPPKANK melalui Portal Keahlian.\n\nNo. Rujukan: ${j.ref}\nNama: ${p.nama}\nJenis: ${f.label} (RM${tot(p.jenis)})\nTarikh bayaran: ${p.tarikhBayar}\nNo. rujukan transaksi: ${p.rujukanBayar}\n\nMohon pengesahan bayaran. Terima kasih.`;
+  const msg=`Assalamualaikum Dr. Saya telah ${isRenew?"menghantar permohonan pembaharuan keahlian":"mendaftar sebagai ahli"} PPPKANK melalui Portal Keahlian.\n\nNo. Rujukan: ${j.ref}\nNama: ${p.nama}${p.noAhli?`\nNo. Ahli: ${p.noAhli}`:""}\nJenis: ${f.label}${p.jenis==="RENEW_TAHUNAN"?" "+p.tahunYuranPilih:""} (RM${tot(p.jenis)})\nTarikh bayaran: ${p.tarikhBayar}\nNo. rujukan transaksi: ${p.rujukanBayar}\n\nMohon pengesahan bayaran. Terima kasih.`;
   $("waBtn").href=`https://wa.me/${CONFIG.BENDAHARI_WA}?text=${encodeURIComponent(msg)}`;
   $("card").scrollIntoView({behavior:"smooth"});
 }
