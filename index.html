@@ -247,7 +247,7 @@ footer a{color:var(--green-700);font-weight:700}
         <div class="pgroup" style="margin-top:18px">Ahli Sedia Ada</div>
         <div class="plans" id="plansRenew"></div>
         <div class="renewbox grid" id="renewbox">
-          <div class="f" id="fTahun"><label for="tahunYuran">Tahun yuran yang dibayar <em>*</em></label><select id="tahunYuran"></select></div>
+          <div class="f" id="fTahun"><label for="tahunYuran">Tahun keahlian yang diperbaharui <em>*</em> <small>(sah hingga 31 Disember tahun dipilih)</small></label><select id="tahunYuran"></select></div>
           <div class="f"><label for="noAhli">No. Ahli <small>(jika diketahui, cth: 23-07)</small></label><input id="noAhli" name="noAhli" placeholder="cth: 23-07"></div>
         </div>
         <div style="height:16px" id="plans"></div>
@@ -362,7 +362,7 @@ $("fT").textContent = "RM"+tot("TAHUNAN"); $("fS").textContent = "RM"+tot("SEUMU
 
 /* ---------- Pelan keahlian ---------- */
 const TAGS = {
-  TAHUNAN: f=>`Termasuk bayaran masuk · sah hingga 31 Disember ${YEAR}`,
+  TAHUNAN: f=>`Termasuk bayaran masuk · sah hingga 31 Disember ${YEAR+1}`,
   SEUMUR: f=>"Termasuk bayaran masuk · sekali bayar",
   RENEW_TAHUNAN: f=>"Untuk ahli tahunan sedia ada",
   RENEW_SEUMUR: f=>"Ahli sedia ada yang ingin bertukar ke seumur hidup"
